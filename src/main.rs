@@ -2,6 +2,7 @@ use reqwest;
 use std::fs::{create_dir, write};
 use std::{env, io, process::Command};
 
+#[allow(non_snake_case)]
 #[tokio::main]
 async fn main() {
     println!("Welcome TO Phantom Project Creator");
@@ -36,16 +37,40 @@ async fn main() {
                 .arg(".gitignore")
                 .output()
                 .expect("Failed to create file");
-            let resp = reqwest::get(
-                "https://raw.githubusercontent.com/gitignore/Node.gitignore/master/Node.gitignore",
-            )
-            .await
-            .expect("Failed to get file");
-            write(
-                "./.gitignore",
-                resp.text().await.expect("Failed to read file"),
-            )
-            .expect("Failed to write file");
+            let mut isGitNeeded = String::new();
+            println!("Do you want to add a git repository? (y/n)");
+            io::stdin()
+                .read_line(&mut isGitNeeded)
+                .expect("Failed to read line");
+            if isGitNeeded == "y"
+                || isGitNeeded == "yes"
+                || isGitNeeded == "Y"
+                || isGitNeeded == "Yes"
+            {
+                println!("Adding git repository");
+                Command::new("/usr/bin/git")
+                    .args(["init", "--bare"])
+                    .output()
+                    .expect("Failed to execute command");
+                Command::new("/usr/bin/git")
+                    .args(["add", "."])
+                    .output()
+                    .expect("Failed to execute command");
+                Command::new("git")
+                    .args(["commit", "-m", "Initial Commit"])
+                    .output()
+                    .expect("Failed to execute command");
+                let resp = reqwest::get(
+                        "https://raw.githubusercontent.com/gitignore/Node.gitignore/master/Node.gitignore",
+                    )
+                    .await
+                    .expect("Failed to get file");
+                write(
+                    "./.gitignore",
+                    resp.text().await.expect("Failed to read file"),
+                )
+                .expect("Failed to write file");
+            }
             println!("Project Created Successfully!");
         }
         _ => {
